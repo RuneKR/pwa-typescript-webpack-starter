@@ -1,0 +1,22 @@
+{
+  "name": "ORDS Dev",
+  "short_name": "ORDS Dev",
+  "description": "ORDS Dev description",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "theme_color": "#348434",
+  "background_color": "#348434",
+  "icons": [
+    {
+      "src": "images/manifest/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/manifest/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

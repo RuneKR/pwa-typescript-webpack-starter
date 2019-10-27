@@ -1,0 +1,20 @@
+{
+  "builds": [
+    {
+      "name": "esm-bundled",
+      "browserCapabilities": [
+        "es2015",
+        "modules"
+      ]
+    },
+    {
+      "name": "es6-bundled",
+      "browserCapabilities": [
+        "es2016"
+      ]
+    },
+    {
+      "name": "es5-bundled"
+    }
+  ]
+}
