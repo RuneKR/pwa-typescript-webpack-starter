@@ -65,6 +65,7 @@ module.exports = (option) => {
       }),
       new GenerateSW({
         navigateFallback: 'index.html',
+        clientsClaim: true,
         importWorkboxFrom: 'local'
       }),
       new CopyPlugin([
