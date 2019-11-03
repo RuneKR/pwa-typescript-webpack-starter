@@ -1,17 +1,19 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const getBabelTarget = require('./getBabelTarget')
 const GenerateSW = require('workbox-webpack-plugin').GenerateSW
 const path = require('path')
 const CopyPlugin = require('copy-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ManifestPlugin = require('webpack-manifest-plugin');
 
-module.exports = (option) => {
+const getBabelConfig = require('./getBabelConfig')
 
+module.exports = (option, mode) => {
+
+  const babelConfig = getBabelConfig(option)
   const outDir = path.resolve(process.cwd(), `server/build/${option}`)
 
   return {
-    mode: 'production',
+    mode: mode,
     entry: './src/ords-app.ts',
     resolve: {
       extensions: ['.ts', '.js', '.mjs']
@@ -27,26 +29,38 @@ module.exports = (option) => {
           ],
         },
         {
-          test: /\.js$|.ts$/,
+          test: /\.m?js$|.ts$/,
+          exclude: /node_modules/,
           use: {
             loader: 'babel-loader',
             options: {
-              plugins: [
-                '@babel/plugin-syntax-dynamic-import',
-                ["@babel/plugin-proposal-decorators", { "decoratorsBeforeExport": true }],
-                '@babel/plugin-proposal-class-properties',
-              ],
+              plugins: babelConfig.babelPlugins,
               presets: [
                 "@babel/preset-typescript",
                 [
                   '@babel/preset-env',
-                  {
-                    targets: getBabelTarget(option)
-                  },
+                  babelConfig.preset,
                 ],
               ],
             },
           },
+        },
+        {
+          test: /\.m?js$/,
+          exclude: /@babel(?:\/|\\{1,2})runtime/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              sourceType: 'unambiguous',
+              plugins: babelConfig.babelPlugins,
+              presets: [
+                [
+                  '@babel/preset-env',
+                  babelConfig.preset,
+                ],
+              ],
+            },
+          }
         }
       ]
     },
@@ -60,23 +74,23 @@ module.exports = (option) => {
       new HtmlWebpackPlugin({
         template: 'index.html',
         templateParameters: {
-          base: '/' + option + '/'
+          base: mode === 'development' ? '/' : '/' + option + '/'
         }
       }),
-      new GenerateSW({
+      mode === 'production' ? new GenerateSW({
         navigateFallback: 'index.html',
         clientsClaim: true,
         importWorkboxFrom: 'local'
-      }),
-      new CopyPlugin([
+      }) : undefined,
+      mode === 'production' ? new CopyPlugin([
         { from: 'manifest.json', to: path.resolve(outDir, 'manifest.json') },
         { from: 'images', to: path.resolve(outDir, 'images') },
-      ]),
-      new ManifestPlugin({
+      ]) : undefined,
+      mode === 'production' ? new ManifestPlugin({
         fileName: 'push-manifest.json',
         filter: (fileDescriptior) => fileDescriptior.isInitial,
         generate: (seed, files) => (
-          files.reduce((manifest, { name, path }) => {
+          files.reduce((manifest, { name }) => {
             const fileName = '/' + name
             const fileData = {
               weight: 1,
@@ -85,7 +99,10 @@ module.exports = (option) => {
             return ({ ...manifest, [fileName]: fileData })
           }, seed)
         )
-      })
-    ]
+      }) : undefined
+    ].filter(Boolean),
+    devServer: {
+      historyApiFallback: true
+    }
   }
 }
